@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserCog, BookOpen, ShieldAlert, AlertCircle, Eye, Check, Palette, Database, ExternalLink, Zap, Layout } from 'lucide-react';
-import { TheologicalProfile, AVAILABLE_COLOR_SETS } from '../../types';
+import { UserCog, BookOpen, ShieldAlert, AlertCircle, Eye, Check, Palette, Database, ExternalLink, Zap, Layout, Users } from 'lucide-react';
+import { TheologicalProfile, AudienceContext, AVAILABLE_COLOR_SETS } from '../../types';
 import { getProfileInstruction } from '../../services/geminiService';
 
 interface SettingsModalProps {
@@ -126,6 +126,51 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                     <span className={`text-xs font-bold ${localProfile.guardrail === opt ? 'text-crimson' : 'text-slate-600'}`}>{opt}</span>
                                                 </div>
                                             ))}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Audience Section */}
+                                <section className="space-y-4">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                        <Users size={14}/> 기본 청중 설정
+                                    </h4>
+                                    <p className="text-[10px] text-slate-400 italic">* 새 설교 프로젝트 생성 시 이 기본값이 자동 적용됩니다.</p>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">청중 설명</label>
+                                            <input type="text" className="w-full border border-slate-300 p-2.5 rounded-sm text-sm focus:ring-1 focus:ring-crimson focus:border-crimson outline-none bg-white text-slate-900 shadow-sm"
+                                                value={localProfile.defaultAudience?.description || ''}
+                                                onChange={e => setLocalProfile({...localProfile, defaultAudience: { ...localProfile.defaultAudience, description: e.target.value } as AudienceContext})}
+                                                placeholder="예: 직장, 사업, 가사 등으로 지쳐있는 성도들"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">평균 연령대</label>
+                                                <input type="text" className="w-full border border-slate-300 p-2.5 rounded-sm text-sm focus:ring-1 focus:ring-crimson focus:border-crimson outline-none bg-white text-slate-900 shadow-sm"
+                                                    value={localProfile.defaultAudience?.averageAge || ''}
+                                                    onChange={e => setLocalProfile({...localProfile, defaultAudience: { ...localProfile.defaultAudience, averageAge: e.target.value } as AudienceContext})}
+                                                    placeholder="예: 30-60대"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">영적 수준</label>
+                                                <input type="text" className="w-full border border-slate-300 p-2.5 rounded-sm text-sm focus:ring-1 focus:ring-crimson focus:border-crimson outline-none bg-white text-slate-900 shadow-sm"
+                                                    value={localProfile.defaultAudience?.spiritualLevel || ''}
+                                                    onChange={e => setLocalProfile({...localProfile, defaultAudience: { ...localProfile.defaultAudience, spiritualLevel: e.target.value } as AudienceContext})}
+                                                    placeholder="예: 영적 재충전이 간절한 예배자"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 mb-1.5 uppercase">현재 상황</label>
+                                            <textarea className="w-full border border-slate-300 p-2.5 rounded-sm text-sm focus:ring-1 focus:ring-crimson focus:border-crimson outline-none bg-white text-slate-900 shadow-sm resize-none"
+                                                rows={2}
+                                                value={localProfile.defaultAudience?.currentSituation || ''}
+                                                onChange={e => setLocalProfile({...localProfile, defaultAudience: { ...localProfile.defaultAudience, currentSituation: e.target.value } as AudienceContext})}
+                                                placeholder="예: 일주일의 치열한 삶을 마치고 주님 앞에 나아온 상태"
+                                            />
                                         </div>
                                     </div>
                                 </section>

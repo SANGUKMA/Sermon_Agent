@@ -29,6 +29,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onCr
   if (!isOpen) return null;
 
   const handleCreate = () => {
+    const audienceContext = profile.defaultAudience?.description
+      ? { ...profile.defaultAudience }
+      : DEFAULT_PROJECT.audienceContext;
     const project: SermonProject = {
       ...DEFAULT_PROJECT,
       id: uuidv4(),
@@ -37,6 +40,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClose, onCr
       date: newDate,
       seriesId: newSeriesId,
       mode: creationMode,
+      audienceContext,
+      audience: audienceContext.description || DEFAULT_PROJECT.audience,
       lastModified: Date.now(),
     };
     onCreate(project);

@@ -103,6 +103,7 @@ export interface TheologicalProfile {
   avoidance: string;
   guardrail?: string;
   preferredStructure?: string;
+  defaultAudience?: AudienceContext;
 }
 
 export interface CustomPrompt {
@@ -135,7 +136,13 @@ export const DEFAULT_PROFILE: TheologicalProfile = {
   style: '전통적 삼대지 강해 설교',
   avoidance: '지나치게 자극적인 예화, 세속적 성공주의',
   guardrail: '성경 중심의 복음주의',
-  preferredStructure: '서론 - 본론 1, 2, 3 - 결론 및 기도'
+  preferredStructure: '서론 - 본론 1, 2, 3 - 결론 및 기도',
+  defaultAudience: {
+    description: '직장, 사업, 가사 등으로 지쳐있는 성도들',
+    averageAge: '30-60대',
+    spiritualLevel: '영적 재충전이 간절한 예배자',
+    currentSituation: '일주일의 치열한 삶을 마치고 주님 앞에 나아온 상태'
+  }
 };
 
 export const AVAILABLE_COLOR_SETS: ColorSet[] = [
