@@ -1,14 +1,17 @@
 
 import React, { useState, useRef, Suspense } from 'react';
-import { 
-  Plus, BookOpen, Trash2, Sparkles, Database, Loader2, 
-  Layers, BookMarked, Upload, Search, Calendar, Settings, 
-  ChevronDown, User, FileEdit, Undo, RefreshCw, ChevronLeft, ArrowRight
+import {
+  Plus, BookOpen, Trash2, Sparkles, Database, Loader2,
+  Layers, BookMarked, Upload, Search, Calendar, Settings,
+  ChevronDown, User, FileEdit, Undo, RefreshCw, ChevronLeft, ArrowRight,
+  Cloud, LogOut, Shield
 } from 'lucide-react';
 import { SermonProject, SermonSeries, TheologicalProfile, DEFAULT_PROJECT } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { analyzeImportedSermon } from '../services/geminiService';
 import { ProjectCard } from './dashboard/ProjectCard';
+import { SubscriptionBanner } from './SubscriptionBanner';
+import type { SubscriptionState } from '../services/subscriptionService';
 
 const SettingsModal = React.lazy(() => import('./dashboard/SettingsModal'));
 const NewProjectModal = React.lazy(() => import('./dashboard/NewProjectModal'));
@@ -31,6 +34,13 @@ interface DashboardProps {
   currentThemeId?: string;
   onThemeChange?: (themeId: string) => void;
   onOpenBlank: () => void;
+  userEmail?: string;
+  isCloudMode?: boolean;
+  onLogout?: () => void;
+  isAdmin?: boolean;
+  onOpenAdmin?: () => void;
+  subscriptionState?: SubscriptionState | null;
+  onUpgrade?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -50,7 +60,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLoadSampleKr,
   currentThemeId = 'crimson',
   onThemeChange,
-  onOpenBlank
+  onOpenBlank,
+  userEmail,
+  isCloudMode = false,
+  onLogout,
+  isAdmin = false,
+  onOpenAdmin,
+  subscriptionState,
+  onUpgrade
 }) => {
   const [activeTab, setActiveTab] = useState<'projects' | 'series' | 'trash'>('projects');
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,9 +177,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
           <div>
             <div className="flex items-center gap-3">
-               <h1 className="text-3xl font-black text-slate-900 tracking-tight font-serif">Sermon-AI비서</h1>
-               <span className="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-slate-200 flex items-center gap-1">
-                   <Database size={10} /> Local Persistence
+               <h1 className="text-3xl font-black text-slate-900 tracking-tight font-serif cursor-pointer hover:text-crimson transition-colors" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Sermon-AI비서</h1>
+               <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded-sm border flex items-center gap-1 ${isCloudMode ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                   {isCloudMode ? <><Cloud size={10} /> Cloud Sync</> : <><Database size={10} /> Local</>}
                </span>
             </div>
             <p className="text-slate-500 mt-1 text-sm">깊이 있는 설교 준비를 위한 목회자 전용 AI 워크스페이스</p>
@@ -188,17 +205,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs shadow-sm">
                         <User size={14} />
                     </div>
-                    <span className="text-xs font-bold text-slate-700 hidden md:block max-w-[120px] truncate">로컬 사용자</span>
+                    <span className="text-xs font-bold text-slate-700 hidden md:block max-w-[160px] truncate">{userEmail || '로컬 사용자'}</span>
                     <ChevronDown size={14} className="text-slate-400"/>
                  </button>
                  {isUserMenuOpen && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-sm shadow-xl border border-slate-200 z-50 animate-in fade-in slide-in-from-top-1">
+                        {isAdmin && onOpenAdmin && (
+                            <button onClick={() => { onOpenAdmin(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-3 text-xs hover:bg-crimson/5 flex items-center gap-2 text-crimson font-bold transition-colors border-b">
+                                <Shield size={14}/> 관리자 대시보드
+                            </button>
+                        )}
                         <button onClick={() => { setIsSettingsOpen(true); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-3 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition-colors border-b">
                             <Settings size={14}/> 환경 설정
                         </button>
-                        <button onClick={() => { setActiveTab('trash'); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-3 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition-colors">
+                        <button onClick={() => { setActiveTab('trash'); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-3 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition-colors border-b">
                             <Trash2 size={14}/> 휴지통
                         </button>
+                        {onLogout && (
+                            <button onClick={() => { onLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-3 text-xs hover:bg-red-50 flex items-center gap-2 text-red-500 transition-colors">
+                                <LogOut size={14}/> 로그아웃
+                            </button>
+                        )}
                     </div>
                  )}
              </div>
@@ -220,6 +247,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
              </button>
           </div>
         </header>
+
+        {/* SUBSCRIPTION BANNER */}
+        {isCloudMode && subscriptionState && onUpgrade && (
+          <div className="mb-6">
+            <SubscriptionBanner state={subscriptionState} onUpgrade={onUpgrade} />
+          </div>
+        )}
 
         {/* NAVIGATION TABS */}
         <div className="flex gap-8 mb-8 border-b border-slate-200">

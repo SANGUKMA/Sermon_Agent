@@ -16,3 +16,6 @@ export const APP_CONFIG = {
   appName: 'Sermon-AI비서',
   maxOutputTokens: 1024,
 };
+
+// Admin
+export const ADMIN_EMAIL = 'issacma70@gmail.com';

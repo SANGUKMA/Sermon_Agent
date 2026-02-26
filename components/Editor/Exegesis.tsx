@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { SermonProject, TheologicalProfile } from '../../types';
 import { Scroll, Languages, BookOpen, Sparkles, X, Plus, Trash2, ListFilter, ClipboardCheck, ArrowRight, Loader2, Brain } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { analyzeOriginalWord, generateOIAInsight } from '../../services/geminiService';
+import { analyzeOriginalWord, generateOIAInsight, fetchBibleText } from '../../services/geminiService';
+import { withUsageTracking, UsageLimitError } from '../../services/aiGateway';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ExegesisProps {
@@ -20,6 +21,26 @@ export const Exegesis: React.FC<ExegesisProps> = ({ data, profile, onChange, onG
   const [wordAnalysis, setWordAnalysis] = useState<{word: string, content: string} | null>(null);
   const [analyzingWord, setAnalyzingWord] = useState(false);
   const [analyzingItemId, setAnalyzingItemId] = useState<string | null>(null);
+  const [bibleText, setBibleText] = useState<string>('');
+  const [loadingBible, setLoadingBible] = useState(false);
+
+  const handleFetchBible = async () => {
+    if (!data.passage?.trim()) {
+      alert("본문 구절이 설정되지 않았습니다.");
+      return;
+    }
+    setLoadingBible(true);
+    try {
+      const text = await withUsageTracking('fetchBibleText',
+        () => fetchBibleText(data.passage));
+      setBibleText(text);
+    } catch (e: any) {
+      if (e instanceof UsageLimitError) setBibleText(e.message);
+      else setBibleText("본문을 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingBible(false);
+    }
+  };
 
   const handleGen = async (type: 'historical' | 'language' | 'theology') => {
     setLoadingType(type);
@@ -59,7 +80,8 @@ export const Exegesis: React.FC<ExegesisProps> = ({ data, profile, onChange, onG
     }
     setAnalyzingItemId(id);
     try {
-        const insight = await generateOIAInsight(observation, data.passage, profile);
+        const insight = await withUsageTracking('generateOIAInsight',
+          () => generateOIAInsight(observation, data.passage, profile));
         const item = data.hermeneutics.find(h => h.id === id);
         if (!item) return;
 
@@ -123,10 +145,12 @@ export const Exegesis: React.FC<ExegesisProps> = ({ data, profile, onChange, onG
     setAnalyzingWord(true);
     setWordAnalysis(null);
     try {
-        const analysis = await analyzeOriginalWord(word, data.passage);
+        const analysis = await withUsageTracking('analyzeOriginalWord',
+          () => analyzeOriginalWord(word, data.passage));
         setWordAnalysis({ word, content: analysis });
-    } catch (e) {
-        setWordAnalysis({ word, content: "분석 중 오류가 발생했습니다." });
+    } catch (e: any) {
+        if (e instanceof UsageLimitError) setWordAnalysis({ word, content: e.message });
+        else setWordAnalysis({ word, content: "분석 중 오류가 발생했습니다." });
     } finally {
         setAnalyzingWord(false);
     }
@@ -154,6 +178,41 @@ export const Exegesis: React.FC<ExegesisProps> = ({ data, profile, onChange, onG
       )}
 
       {activeTab === 'hermeneutics' && (
+        <div className="space-y-4">
+        {/* Bible Text Display */}
+        <div className="bg-white rounded-sm border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2 font-serif text-sm">
+              <span className="text-crimson"><BookOpen size={16} /></span> 성경 본문 — {data.passage || '구절 미설정'}
+            </h3>
+            <button
+              onClick={handleFetchBible}
+              disabled={loadingBible}
+              className="px-4 py-1.5 bg-slate-900 text-white rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-crimson transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+            >
+              {loadingBible ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {bibleText ? '다시 불러오기' : '본문 불러오기'}
+            </button>
+          </div>
+          {bibleText && (
+            <div className="p-6 max-h-64 overflow-y-auto bg-amber-50/30">
+              <div className="font-serif text-base text-slate-800 leading-loose whitespace-pre-wrap">
+                {bibleText}
+              </div>
+            </div>
+          )}
+          {!bibleText && !loadingBible && (
+            <div className="p-6 text-center text-slate-400 text-sm font-serif italic">
+              "본문 불러오기" 버튼을 클릭하면 개역개정판 성경 본문이 표시됩니다.
+            </div>
+          )}
+          {loadingBible && (
+            <div className="p-6 flex items-center justify-center gap-2 text-slate-400">
+              <Loader2 size={16} className="animate-spin text-crimson" /> 성경 본문을 불러오는 중...
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 bg-white rounded-sm border border-slate-200 shadow-card flex flex-col min-h-[600px]">
             <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center px-8">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -242,6 +301,7 @@ export const Exegesis: React.FC<ExegesisProps> = ({ data, profile, onChange, onG
                     <ArrowRight size={10}/> 관찰 텍스트에서 단어를 드래그하면 원어 분석을 수행할 수 있습니다.
                  </p>
             </div>
+        </div>
         </div>
       )}
 

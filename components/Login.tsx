@@ -1,17 +1,21 @@
 
 import React, { useState } from 'react';
 import { APP_CONFIG } from '../constants';
-import { Mail, Lock, ArrowRight, Loader2, CheckCircle2, User, UserPlus, LogIn } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ArrowLeft, Loader2, CheckCircle2, User, UserPlus, LogIn, WifiOff } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 
 interface LoginProps {
-  onLogin: (email: string) => void;
+  onLogin: (session: Session) => void;
+  onSkip: () => void;
+  onBackToLanding?: () => void;
+  initialSignUp?: boolean;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, onSkip, onBackToLanding, initialSignUp }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  
+  const [isSignUp, setIsSignUp] = useState(initialSignUp ?? false);
+
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -60,7 +64,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             });
             if (error) throw error;
             if (data.session) {
-                onLogin(data.session.user.email || email);
+                onLogin(data.session);
             } else {
                 setError("회원가입 확인 메일을 확인해주세요.");
             }
@@ -71,7 +75,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             });
             if (error) throw error;
             if (data.session) {
-                onLogin(data.session.user.email || email);
+                onLogin(data.session);
             }
         }
     } catch (err: any) {
@@ -88,8 +92,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative overflow-hidden flex-col justify-between p-12 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-crimson/90 to-slate-900/90 z-10"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2673&auto=format&fit=crop')] bg-cover bg-center opacity-30"></div>
-        
+
         <div className="relative z-20">
+          {onBackToLanding && (
+            <button
+              onClick={onBackToLanding}
+              className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors mb-6"
+            >
+              <ArrowLeft size={16} />
+              홈으로 돌아가기
+            </button>
+          )}
           <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center mb-6">
              <span className="font-serif font-black text-xl">G</span>
           </div>
@@ -119,7 +132,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
            </div>
            <div className="mt-8 pt-8 border-t border-white/10 text-xs text-slate-500">
-              © {new Date().getFullYear()} Sermon AI Assistant. All rights reserved.
+              &copy; {new Date().getFullYear()} Sermon AI Assistant. All rights reserved.
            </div>
         </div>
       </div>
@@ -137,7 +150,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            
+
             {/* Name Field (Sign Up Only) */}
             {isSignUp && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
@@ -205,8 +218,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`block w-full pl-10 pr-3 py-3 border rounded-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 sm:text-sm transition-all bg-slate-50 focus:bg-white ${
-                            confirmPassword && password !== confirmPassword 
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                            confirmPassword && password !== confirmPassword
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                             : 'border-slate-200 focus:ring-crimson focus:border-crimson'
                         }`}
                         placeholder="••••••••"
@@ -255,7 +268,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 ) : (
                   <span className="flex items-center gap-2">
                     {isSignUp ? <UserPlus size={18}/> : <LogIn size={18}/>}
-                    {isSignUp ? '회원가입 완료' : '로그인'} 
+                    {isSignUp ? '회원가입 완료' : '로그인'}
                     <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </span>
                 )}
@@ -266,7 +279,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mt-6 text-center">
              <p className="text-slate-500 text-sm">
                  {isSignUp ? '이미 계정이 있으신가요? ' : '아직 회원이 아니신가요? '}
-                 <button 
+                 <button
                     onClick={toggleMode}
                     className="font-bold text-crimson hover:underline focus:outline-none"
                  >
@@ -274,6 +287,33 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                  </button>
              </p>
           </div>
+
+          {/* Offline Skip Button */}
+          <div className="pt-4 border-t border-slate-100">
+            <button
+              onClick={onSkip}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-sm transition-all border border-slate-200"
+            >
+              <WifiOff size={16} />
+              로그인 없이 오프라인으로 사용하기
+            </button>
+            <p className="text-[10px] text-slate-400 text-center mt-2">
+              오프라인 모드에서는 데이터가 이 브라우저에만 저장됩니다.
+            </p>
+          </div>
+
+          {/* Back to Landing (mobile) */}
+          {onBackToLanding && (
+            <div className="lg:hidden text-center">
+              <button
+                onClick={onBackToLanding}
+                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-crimson transition-colors"
+              >
+                <ArrowLeft size={14} />
+                홈으로 돌아가기
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

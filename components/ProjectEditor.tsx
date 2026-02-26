@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SermonProject, SermonStage, TheologicalProfile, CustomPrompt } from '../types';
 import { 
   Layout, Book, PenTool, Edit3, FileText, ChevronRight, 
-  CheckCircle2, ChevronLeft, RefreshCcw, Sparkles, Home, ShieldCheck, MessageSquare, Brain, Loader2, AlertTriangle, X 
+  CheckCircle2, RefreshCcw, Sparkles, Home, ShieldCheck, MessageSquare, Brain, Loader2, AlertTriangle, X 
 } from 'lucide-react';
 import {
   generateStructureOptions,
@@ -17,6 +17,7 @@ import {
   chatWithSermonAI,
   AIError
 } from '../services/geminiService';
+import { withUsageTracking, UsageLimitError } from '../services/aiGateway';
 
 // Sub-components
 import { Planning } from './Editor/Planning';
@@ -35,6 +36,7 @@ interface ProjectEditorProps {
   customPrompts?: CustomPrompt[];
   onSaveCustomPrompt?: (prompt: CustomPrompt) => void;
   onDeleteCustomPrompt?: (id: string) => void;
+  onShowPricing?: () => void;
 }
 
 interface ChatMessage {
@@ -59,7 +61,8 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   onBack,
   customPrompts = [],
   onSaveCustomPrompt,
-  onDeleteCustomPrompt
+  onDeleteCustomPrompt,
+  onShowPricing
 }) => {
   const [activeStage, setActiveStage] = useState<string>(
     project.mode === 'manual' ? SermonStage.MANUSCRIPT : 'OVERVIEW'
@@ -142,11 +145,14 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
       setQuotaError(null);
 
       try {
-          const response = await chatWithSermonAI(chatInput, project, profile, activeStage);
+          const response = await withUsageTracking('chatWithSermonAI',
+            () => chatWithSermonAI(chatInput, project, profile, activeStage));
           const aiMsg: ChatMessage = { role: 'ai', content: response, timestamp: Date.now() };
           setChatHistory(prev => [...prev, aiMsg]);
       } catch (err: any) {
-          if (err instanceof AIError && err.isQuota) {
+          if (err instanceof UsageLimitError) {
+            onShowPricing?.();
+          } else if (err instanceof AIError && err.isQuota) {
             setQuotaError(err.message);
           }
           const errorMsg: ChatMessage = { role: 'ai', content: err.message || 'AI 연결에 실패했습니다.', timestamp: Date.now() };
@@ -173,8 +179,10 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
             onGenerateStructureOptions={async () => {
                try {
                  setQuotaError(null);
-                 return await generateStructureOptions(project.title, project.passage, project.theme, profile);
+                 return await withUsageTracking('generateStructureOptions',
+                   () => generateStructureOptions(project.title, project.passage, project.theme, profile));
                } catch (e: any) {
+                 if (e instanceof UsageLimitError) { onShowPricing?.(); return []; }
                  if (e instanceof AIError) setQuotaError(e.message);
                  return [];
                }
@@ -195,12 +203,14 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
                    type === 'language' ? 'originalLanguage' : 'theologicalThemes'
                  ];
 
-                 const insight = await generateExegesisHelp(project.passage, type, currentContent, instruction, profile);
+                 const insight = await withUsageTracking('generateExegesisHelp',
+                   () => generateExegesisHelp(project.passage, type, currentContent, instruction, profile));
 
                  if(type === 'historical') updateProjectField('historicalContext', insight);
                  if(type === 'language') updateProjectField('originalLanguage', insight);
                  if(type === 'theology') updateProjectField('theologicalThemes', insight);
                } catch (e: any) {
+                 if (e instanceof UsageLimitError) { onShowPricing?.(); return; }
                  if (e instanceof AIError && e.isQuota) setQuotaError(e.message);
                  else setQuotaError(e.message || 'AI 연구 생성에 실패했습니다.');
                }
@@ -209,11 +219,26 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
         );
       case SermonStage.MEDITATION:
         return (
-           <Meditation 
-             data={project} 
-             onUpdate={updateProject} 
-             onGetTemplate={generateMeditationTemplate}
-             onGetInsights={async (journal) => generateMeditationIntegration(journal, project.passage)}
+           <Meditation
+             data={project}
+             onUpdate={updateProject}
+             onGetTemplate={async () => {
+               try {
+                 return await withUsageTracking('generateMeditationTemplate', () => generateMeditationTemplate());
+               } catch (e: any) {
+                 if (e instanceof UsageLimitError) { onShowPricing?.(); return ''; }
+                 throw e;
+               }
+             }}
+             onGetInsights={async (journal) => {
+               try {
+                 return await withUsageTracking('generateMeditationIntegration',
+                   () => generateMeditationIntegration(journal, project.passage));
+               } catch (e: any) {
+                 if (e instanceof UsageLimitError) { onShowPricing?.(); return ''; }
+                 throw e;
+               }
+             }}
            />
         );
       case SermonStage.DRAFTING:
@@ -224,8 +249,10 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
             onGenerateDraft={async (options) => {
               try {
                 setQuotaError(null);
-                return await generateSermonDraft(project, profile, options);
+                return await withUsageTracking('generateSermonDraft',
+                  () => generateSermonDraft(project, profile, options));
               } catch (e: any) {
+                if (e instanceof UsageLimitError) { onShowPricing?.(); throw e; }
                 if (e instanceof AIError) setQuotaError(e.message);
                 throw e;
               }
@@ -242,14 +269,32 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
             data={project} 
             onChange={updateProjectField}
             onGenerateNotes={async () => {
-               const notes = await generatePreachingNotes(project.draft);
-               updateProjectField('notes', notes);
+               try {
+                 const notes = await withUsageTracking('generatePreachingNotes',
+                   () => generatePreachingNotes(project.draft));
+                 updateProjectField('notes', notes);
+               } catch (e: any) {
+                 if (e instanceof UsageLimitError) { onShowPricing?.(); return; }
+                 throw e;
+               }
             }}
             onAiEdit={async (text, instruction, explain) => {
-                return await polishBlock(text, instruction, profile, explain);
+                try {
+                  return await withUsageTracking('polishBlock',
+                    () => polishBlock(text, instruction, profile, explain));
+                } catch (e: any) {
+                  if (e instanceof UsageLimitError) { onShowPricing?.(); return ''; }
+                  throw e;
+                }
             }}
             onDoctrinalReview={async () => {
-                return await performDoctrinalReview(project.draft, profile);
+                try {
+                  return await withUsageTracking('performDoctrinalReview',
+                    () => performDoctrinalReview(project.draft, profile));
+                } catch (e: any) {
+                  if (e instanceof UsageLimitError) { onShowPricing?.(); return ''; }
+                  throw e;
+                }
             }}
             customPrompts={customPrompts}
             onSaveCustomPrompt={onSaveCustomPrompt}
@@ -267,8 +312,8 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
       {/* COLUMN 1: Sidebar Navigation */}
       <div className="w-64 bg-white border-r border-slate-200 flex flex-col no-print shadow-lg z-20 shrink-0">
         <div className="p-5 border-b border-slate-100">
-          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-crimson transition-colors mb-4 text-xs font-bold uppercase tracking-wide">
-            <ChevronLeft size={14} /> 대시보드
+          <button onClick={onBack} className="flex items-center gap-2 text-crimson hover:text-crimson-hover transition-colors mb-4 text-sm font-black font-serif tracking-tight whitespace-nowrap">
+            Sermon-AI비서
           </button>
           <div className="mb-1">
             <h2 className="font-black text-lg text-slate-900 leading-tight font-serif truncate" title={project.title}>

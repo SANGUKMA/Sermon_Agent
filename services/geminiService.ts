@@ -302,3 +302,19 @@ export const polishBlock = async (text: string, instruction: string, profile?: T
 
   return response.text || text;
 };
+
+export const fetchBibleText = async (passage: string): Promise<string> => {
+  const ai = getAI();
+  const prompt = `성경 본문 "${passage}"의 전체 텍스트를 개역개정판 기준으로 절 번호와 함께 정확히 출력하십시오.
+다른 설명이나 해설 없이 본문 텍스트만 출력하십시오.
+형식 예시:
+1 여호와는 나의 목자시니 내게 부족함이 없으리로다
+2 그가 나를 푸른 초장에 누이시며...`;
+
+  const response = await withRetry<GenerateContentResponse>(() => ai.models.generateContent({
+    model: FLASH_MODEL,
+    contents: { parts: [{ text: prompt }] },
+  }));
+
+  return response.text || "본문을 불러올 수 없습니다.";
+};

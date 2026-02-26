@@ -6,6 +6,7 @@ import {
   Save, Wand2, FilePlus, ChevronRight, X, Edit3, CornerDownRight
 } from 'lucide-react';
 import { chatWithSermonAI, analyzeImportedSermon } from '../services/geminiService';
+import { withUsageTracking, UsageLimitError } from '../services/aiGateway';
 import { DEFAULT_PROJECT, DEFAULT_PROFILE, SermonProject } from '../types';
 import ReactMarkdown from 'react-markdown';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,9 +14,10 @@ import { v4 as uuidv4 } from 'uuid';
 interface BlankPageProps {
   onBack: () => void;
   onCreateProject: (project: SermonProject) => void;
+  onShowPricing?: () => void;
 }
 
-export const BlankPage: React.FC<BlankPageProps> = ({ onBack, onCreateProject }) => {
+export const BlankPage: React.FC<BlankPageProps> = ({ onBack, onCreateProject, onShowPricing }) => {
   // Persistence: Load from localStorage on mount
   const [scratchpad, setScratchpad] = useState(() => {
     return localStorage.getItem('sermon_scratchpad') || '';
@@ -42,21 +44,23 @@ export const BlankPage: React.FC<BlankPageProps> = ({ onBack, onCreateProject })
     setIsLoading(true);
     setAiOutput('');
     try {
-      const result = await chatWithSermonAI(
-        finalPrompt, 
-        { 
-          ...DEFAULT_PROJECT, 
-          id: 'scratchpad-session',
-          lastModified: Date.now(),
-          title: '자유 묵상 및 스케치',
-          draft: selection || scratchpad 
-        }, 
-        DEFAULT_PROFILE, 
-        'SCRATCHPAD'
-      );
+      const result = await withUsageTracking('chatWithSermonAI',
+        () => chatWithSermonAI(
+          finalPrompt,
+          {
+            ...DEFAULT_PROJECT,
+            id: 'scratchpad-session',
+            lastModified: Date.now(),
+            title: '자유 묵상 및 스케치',
+            draft: selection || scratchpad
+          },
+          DEFAULT_PROFILE,
+          'SCRATCHPAD'
+        ));
       setAiOutput(result);
-    } catch (error) {
-      setAiOutput("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (error: any) {
+      if (error instanceof UsageLimitError) { onShowPricing?.(); setAiOutput(error.message); }
+      else setAiOutput("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
       if(!customPrompt) setPrompt('');
@@ -87,7 +91,8 @@ export const BlankPage: React.FC<BlankPageProps> = ({ onBack, onCreateProject })
     if (!scratchpad.trim()) return;
     setIsConverting(true);
     try {
-      const analysis = await analyzeImportedSermon(scratchpad);
+      const analysis = await withUsageTracking('analyzeImportedSermon',
+        () => analyzeImportedSermon(scratchpad));
       const newProject: SermonProject = {
         ...DEFAULT_PROJECT,
         id: uuidv4(),

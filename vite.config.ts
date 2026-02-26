@@ -19,7 +19,8 @@ export default defineConfig(({ mode }) => {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
-        'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY)
+        'process.env.SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY),
+        'process.env.TOSS_CLIENT_KEY': JSON.stringify(env.TOSS_CLIENT_KEY)
       },
       resolve: {
         alias: {
@@ -39,6 +40,9 @@ export default defineConfig(({ mode }) => {
               }
               if (normalizedId.includes('node_modules/@google/genai')) {
                 return 'vendor-google';
+              }
+              if (normalizedId.includes('node_modules/@supabase')) {
+                return 'vendor-supabase';
               }
             }
           }
