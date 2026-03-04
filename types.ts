@@ -138,10 +138,10 @@ export const DEFAULT_PROFILE: TheologicalProfile = {
   guardrail: '성경 중심의 복음주의',
   preferredStructure: '서론 - 본론 1, 2, 3 - 결론 및 기도',
   defaultAudience: {
-    description: '직장, 사업, 가사 등으로 지쳐있는 성도들',
+    description: '주일 예배를 위해 모인 성도들',
     averageAge: '30-60대',
-    spiritualLevel: '영적 재충전이 간절한 예배자',
-    currentSituation: '일주일의 치열한 삶을 마치고 주님 앞에 나아온 상태'
+    spiritualLevel: '말씀 안에서 영적 성장을 추구하는 예배자',
+    currentSituation: '주일에 하나님의 말씀을 사모하며 예배드리러 나아온 상태'
   }
 };
 
@@ -219,13 +219,13 @@ export const SAMPLE_PROJECT: SermonProject = {
   title: '고난 중에 만나는 하나님의 위로',
   passage: '고린도후서 1:3-7',
   theme: '영적 회복',
-  audience: '금요기도회 성도',
+  audience: '주일예배 성도',
   audienceContext: { 
-    description: '한 주간의 업무로 지친 성도들',
-    currentSituation: '세상에서의 치열한 영적 전투 후 회복이 필요한 시점' 
+    description: '주일 예배를 위해 모인 성도들',
+    currentSituation: '말씀을 통해 영적 성장과 회복을 사모하는 시점' 
   },
-  sermonGoal: '말씀을 통해 하루를 이길 새 힘을 얻기',
-  structure: 'I. 서론: 일주일의 무게를 내려놓음\nII. 본론 1: 모든 위로의 하나님 (3-4절)\nIII. 본론 2: 고난이 넘칠 때 흐르는 위로 (5절)\nIV. 본론 3: 위로를 나누는 공동체 (6-7절)\nV. 결론: 기도로 일어서는 소망',
+  sermonGoal: '말씀을 통해 하나님의 위로와 소망을 새롭게 붙잡기',
+  structure: 'I. 서론: 하나님의 위로 앞에 나아옴\nII. 본론 1: 모든 위로의 하나님 (3-4절)\nIII. 본론 2: 고난이 넘칠 때 흐르는 위로 (5절)\nIV. 본론 3: 위로를 나누는 공동체 (6-7절)\nV. 결론: 말씀으로 세워지는 삶',
   historicalContext: '',
   originalLanguage: '',
   theologicalThemes: '',
@@ -248,17 +248,17 @@ export const SAMPLE_PROJECT: SermonProject = {
 };
 
 export const DEFAULT_PROJECT: Omit<SermonProject, 'id' | 'lastModified'> = {
-  title: '금요기도회 설교: 회복과 소망',
+  title: '주일예배 설교: 회복과 소망',
   passage: '',
-  theme: '영적 회복',
-  audience: '금요기도회 성도',
+  theme: '영적 성장',
+  audience: '주일예배 성도',
   audienceContext: {
-    description: '직장, 사업, 가사 등으로 지쳐있는 성도들',
+    description: '주일 예배를 위해 모인 성도들',
     averageAge: '30-60대',
-    spiritualLevel: '영적 재충전이 간절한 예배자',
-    currentSituation: '일주일의 치열한 삶을 마치고 주님 앞에 나아온 상태'
+    spiritualLevel: '말씀 안에서 영적 성장을 추구하는 예배자',
+    currentSituation: '주일에 하나님의 말씀을 사모하며 예배드리러 나아온 상태'
   },
-  sermonGoal: '지친 심령이 말씀으로 회복되고 다시 일어설 용기를 얻기',
+  sermonGoal: '말씀을 통해 하나님을 깊이 알고 삶에서 그 믿음을 실천하는 힘을 얻기',
   structure: '',
   historicalContext: '',
   originalLanguage: '',

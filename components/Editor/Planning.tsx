@@ -53,13 +53,13 @@ export const Planning: React.FC<PlanningProps> = ({ data, onChange, onGenerateSt
             <h3 className="text-xl font-bold text-slate-900 font-serif">설교 구조 (Outline)</h3>
           </div>
           <button onClick={handleGenerate} disabled={loading} className="text-[10px] bg-slate-900 text-white px-4 py-2 rounded-sm font-bold uppercase tracking-widest hover:bg-crimson transition-all disabled:opacity-50 flex items-center gap-2">
-            {loading ? <Sparkles className="animate-spin" size={14} /> : <Sparkles size={14} />} AI 기도회 구조 제안
+            {loading ? <Sparkles className="animate-spin" size={14} /> : <Sparkles size={14} />} AI 주일예배 구조 제안
           </button>
         </div>
         <textarea 
           value={data.structure}
           onChange={(e) => onChange('structure', e.target.value)}
-          placeholder="I. 서론: 일주일의 무게와 주님의 초대&#10;II. 본론 1: (첫 번째 대지: 회복의 약속)&#10;III. 본론 2: (두 번째 대지: 원어적 소망)&#10;IV. 본론 3: (세 번째 대지: 결단과 능력)&#10;V. 결론: 기도로 일어서는 삶 (기도 제목 포함)"
+          placeholder="I. 서론: 주일, 하나님 앞에 나아옴&#10;II. 본론 1: (첫 번째 대지: 말씀의 진리)&#10;III. 본론 2: (두 번째 대지: 믿음의 성장)&#10;IV. 본론 3: (세 번째 대지: 삶의 변화와 결단)&#10;V. 결론: 말씀을 붙들고 살아가는 삶"
           className="w-full h-80 p-8 border border-slate-200 rounded-sm focus:ring-1 focus:ring-crimson outline-none font-mono text-sm leading-loose bg-white text-slate-900 placeholder:text-slate-300"
         />
       </div>
@@ -68,7 +68,7 @@ export const Planning: React.FC<PlanningProps> = ({ data, onChange, onGenerateSt
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-300">
            <div className="bg-white rounded-sm shadow-2xl max-w-6xl w-full max-h-[80vh] flex flex-col p-8 border-t-8 border-crimson">
              <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
-               <h2 className="text-2xl font-bold text-slate-900 font-serif flex items-center gap-3"><Sparkles className="text-crimson" size={24} /> AI 구조 제안 (금요기도회 특화)</h2>
+               <h2 className="text-2xl font-bold text-slate-900 font-serif flex items-center gap-3"><Sparkles className="text-crimson" size={24} /> AI 구조 제안 (주일예배 특화)</h2>
                <button onClick={() => setShowOptions(false)} className="text-slate-400 hover:text-slate-900 uppercase font-bold text-xs">닫기</button>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto pb-4">
