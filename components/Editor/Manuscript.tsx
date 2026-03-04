@@ -90,7 +90,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex flex-col">
       <div className="flex flex-wrap justify-between items-center mb-6 no-print border-b border-slate-200 pb-4 gap-4">
         <div className="flex gap-2 items-center">
           <button onClick={() => setViewMode('editor')} className={`px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 border ${viewMode === 'editor' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border-slate-200'}`}>에디터</button>
@@ -165,9 +165,10 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                   backgroundColor: 'transparent', 
                   color: currentBg.textColor,
                   fontSize: `${editorSettings.fontSize}px`,
-                  lineHeight: editorSettings.lineHeight
+                  lineHeight: editorSettings.lineHeight,
+                  minHeight: 'calc(100vh - 280px)'
               }}
-              className="flex-1 p-10 resize-none focus:outline-none font-serif placeholder:text-slate-400"
+              className="w-full p-10 resize-none focus:outline-none font-serif placeholder:text-slate-400"
               placeholder="최종 설교 원고를 작성하세요..."
              />
            </div>

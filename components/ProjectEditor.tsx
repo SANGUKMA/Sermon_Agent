@@ -401,8 +401,8 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
         )}
 
         {/* Scrollable Workspace */}
-        <main className={`flex-1 bg-[#f9fafb] relative ${activeStage === SermonStage.MANUSCRIPT ? 'overflow-hidden flex flex-col p-6 lg:p-10' : 'overflow-y-auto p-6 lg:p-10'}`}>
-           <div className={activeStage === SermonStage.MANUSCRIPT ? 'max-w-5xl mx-auto h-full flex flex-col' : 'max-w-5xl mx-auto min-h-full'}>
+        <main className="flex-1 overflow-y-auto bg-[#f9fafb] p-6 lg:p-10 relative">
+           <div className="max-w-5xl mx-auto min-h-full">
               {renderStage()}
            </div>
         </main>
